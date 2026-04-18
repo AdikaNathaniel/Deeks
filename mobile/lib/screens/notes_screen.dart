@@ -48,8 +48,45 @@ class _NotesScreenState extends State<NotesScreen> {
     }
   }
 
-  Future<void> _scanImage() async {
-    final picked = await _picker.pickImage(source: ImageSource.camera);
+  Future<void> _onAddTapped() async {
+    final action = await showModalBottomSheet<_AddAction>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit_note),
+              title: const Text('Blank note'),
+              onTap: () => Navigator.pop(ctx, _AddAction.blank),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_camera),
+              title: const Text('Take photo (OCR)'),
+              onTap: () => Navigator.pop(ctx, _AddAction.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choose from gallery (OCR)'),
+              onTap: () => Navigator.pop(ctx, _AddAction.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (action == null) return;
+    if (action == _AddAction.blank) {
+      await _openForm();
+      return;
+    }
+    await _scanImage(
+      action == _AddAction.camera ? ImageSource.camera : ImageSource.gallery,
+    );
+  }
+
+  Future<void> _scanImage(ImageSource source) async {
+    final picked = await _picker.pickImage(source: source);
     if (picked == null) return;
     try {
       final text = await FlutterTesseractOcr.extractText(
@@ -114,27 +151,15 @@ class _NotesScreenState extends State<NotesScreen> {
           );
         },
       ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          FloatingActionButton.small(
-            heroTag: 'ocr',
-            onPressed: _scanImage,
-            tooltip: 'Scan image (OCR)',
-            child: const Icon(Icons.document_scanner),
-          ),
-          const SizedBox(height: 12),
-          FloatingActionButton(
-            heroTag: 'add-note',
-            onPressed: () => _openForm(),
-            child: const Icon(Icons.add),
-          ),
-        ],
+      floatingActionButton: FloatingActionButton(
+        onPressed: _onAddTapped,
+        child: const Icon(Icons.add),
       ),
     );
   }
 }
+
+enum _AddAction { blank, camera, gallery }
 
 class _NoteForm extends StatefulWidget {
   final Note? existing;
