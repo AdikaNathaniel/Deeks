@@ -1,0 +1,497 @@
+{
+  "info": {
+    "_postman_id": "deeks-api-collection-v1",
+    "name": "Deeks API",
+    "description": "Full CRUD for all 4 sections + auth. After login/register, the JWT is auto-saved to {{accessToken}} and reused on protected requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://51.20.183.217",
+      "description": "AWS EC2 gateway. For local dev use http://localhost."
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "description": "Auto-populated by the Register or Login request."
+    },
+    {
+      "key": "userEmail",
+      "value": "you@deeks.app"
+    },
+    {
+      "key": "userPassword",
+      "value": "supersecret"
+    },
+    {
+      "key": "meetingId",
+      "value": "",
+      "description": "Auto-populated by Create Meeting."
+    },
+    {
+      "key": "linkId",
+      "value": "",
+      "description": "Auto-populated by Create Link."
+    },
+    {
+      "key": "passwordId",
+      "value": "",
+      "description": "Auto-populated by Create Password."
+    },
+    {
+      "key": "noteId",
+      "value": "",
+      "description": "Auto-populated by Create Note."
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.accessToken) {",
+                  "    pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "    console.log('Saved accessToken');",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.accessToken) {",
+                  "    pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "    console.log('Saved accessToken');",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Meetings",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]
+      },
+      "item": [
+        {
+          "name": "Create Meeting",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json._id) {",
+                  "    pm.collectionVariables.set('meetingId', json._id);",
+                  "    console.log('Saved meetingId: ' + json._id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Q2 planning sync\",\n  \"platform\": \"zoom\",\n  \"link\": \"https://zoom.us/j/1234567890\",\n  \"meetingId\": \"123 456 7890\",\n  \"passcode\": \"deeks\",\n  \"scheduledAt\": \"2026-05-15T14:00:00.000Z\",\n  \"notes\": \"Agenda: roadmap review\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/meetings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "meetings"]
+            }
+          }
+        },
+        {
+          "name": "List Meetings",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/meetings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "meetings"]
+            }
+          }
+        },
+        {
+          "name": "Get Meeting by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/meetings/{{meetingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "meetings", "{{meetingId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Meeting",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Q2 planning sync (updated)\",\n  \"notes\": \"Rescheduled to pick up new stakeholders\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/meetings/{{meetingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "meetings", "{{meetingId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Meeting",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/meetings/{{meetingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "meetings", "{{meetingId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Links",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]
+      },
+      "item": [
+        {
+          "name": "Create Link",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json._id) {",
+                  "    pm.collectionVariables.set('linkId', json._id);",
+                  "    console.log('Saved linkId: ' + json._id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Flutter docs\",\n  \"url\": \"https://docs.flutter.dev\",\n  \"category\": \"Reference\",\n  \"description\": \"Official Flutter documentation\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/links",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "links"]
+            }
+          }
+        },
+        {
+          "name": "List Links",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/links",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "links"]
+            }
+          }
+        },
+        {
+          "name": "Get Link by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/links/{{linkId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "links", "{{linkId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Link",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/links/{{linkId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "links", "{{linkId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Link",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/links/{{linkId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "links", "{{linkId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Passwords (E2E ciphertext only)",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]
+      },
+      "description": "Server stores ciphertext + IV only. Real clients encrypt on device with AES-GCM before sending. The example bodies below use placeholder base64 values.",
+      "item": [
+        {
+          "name": "Create Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json._id) {",
+                  "    pm.collectionVariables.set('passwordId', json._id);",
+                  "    console.log('Saved passwordId: ' + json._id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"platform\": \"GitHub\",\n  \"label\": \"work account\",\n  \"ciphertext\": \"ZmFrZWNpcGhlcnRleHQ=\",\n  \"iv\": \"MTIzNDU2Nzg5MGFi\",\n  \"algorithm\": \"AES-256-GCM\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/passwords",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "passwords"]
+            }
+          }
+        },
+        {
+          "name": "List Passwords",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/passwords",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "passwords"]
+            }
+          }
+        },
+        {
+          "name": "Get Password by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/passwords/{{passwordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "passwords", "{{passwordId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Password",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ciphertext\": \"bmV3Y2lwaGVydGV4dA==\",\n  \"iv\": \"bmV3aXZiYXNlNjQxMg==\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/passwords/{{passwordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "passwords", "{{passwordId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Password",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/passwords/{{passwordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "passwords", "{{passwordId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notes",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]
+      },
+      "item": [
+        {
+          "name": "Create Note",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json._id) {",
+                  "    pm.collectionVariables.set('noteId', json._id);",
+                  "    console.log('Saved noteId: ' + json._id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Kickoff notes\",\n  \"body\": \"Discussed timeline and initial milestones.\",\n  \"tags\": [\"work\", \"planning\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notes"]
+            }
+          }
+        },
+        {
+          "name": "List Notes",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/notes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notes"]
+            }
+          }
+        },
+        {
+          "name": "Get Note by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/notes/{{noteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notes", "{{noteId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Note",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"Updated body content with OCR-extracted text.\",\n  \"tags\": [\"work\", \"planning\", \"updated\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notes/{{noteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notes", "{{noteId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Note",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/notes/{{noteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notes", "{{noteId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -10,20 +10,20 @@ services:
   auth-service:
     environment:
       MONGO_URI: ${MONGO_URI_AUTH}
-    depends_on: []
+    depends_on: !reset []
   meetings-service:
     environment:
       MONGO_URI: ${MONGO_URI_MEETINGS}
-    depends_on: []
+    depends_on: !reset []
   links-service:
     environment:
       MONGO_URI: ${MONGO_URI_LINKS}
-    depends_on: []
+    depends_on: !reset []
   passwords-service:
     environment:
       MONGO_URI: ${MONGO_URI_PASSWORDS}
-    depends_on: []
+    depends_on: !reset []
   notes-service:
     environment:
       MONGO_URI: ${MONGO_URI_NOTES}
-    depends_on: []
+    depends_on: !reset []

@@ -4,6 +4,12 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Deeks uses the camera to capture images for note OCR (text extraction from pictures).</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Deeks reads images from your photo library when you choose to extract text for notes.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Deeks uses Face ID to unlock your passwords and notes.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

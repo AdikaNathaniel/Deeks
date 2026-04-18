@@ -157,7 +157,23 @@ keeps each Node heap bounded. Expect:
    echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
    ```
 
-## 10. HTTPS (recommended before production use)
+## 10. iOS build — one manual Xcode step
+
+The Tesseract trained-data file is on disk at
+`mobile/ios/Runner/tessdata/eng.traineddata` but needs to be registered with
+Xcode's **Copy Bundle Resources** phase or it won't ship in the final `.ipa`.
+One-time setup:
+
+1. Open `mobile/ios/Runner.xcworkspace` in Xcode.
+2. In the file navigator, right-click **Runner** → **Add Files to "Runner"...**.
+3. Select `ios/Runner/tessdata` folder → **Create folder references** (blue folder icon, not groups) → **Add**.
+4. In **Runner target → Build Phases → Copy Bundle Resources**, confirm `tessdata` is listed.
+
+Android has no equivalent step — the file under
+`mobile/android/app/src/main/assets/tessdata/` is bundled automatically by
+Gradle.
+
+## 11. HTTPS (recommended before production use)
 
 For a real domain, use Let's Encrypt via nginx. On the EC2 instance:
 ```bash
