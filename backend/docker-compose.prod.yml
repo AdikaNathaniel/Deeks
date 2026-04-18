@@ -1,0 +1,29 @@
+# Production override: uses MongoDB Atlas M0 instead of the local mongo container.
+# Deploy with:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Requires env vars: JWT_SECRET, MONGO_URI_AUTH, MONGO_URI_MEETINGS, MONGO_URI_LINKS,
+#                    MONGO_URI_PASSWORDS, MONGO_URI_NOTES (all pointing at Atlas)
+services:
+  mongo:
+    profiles:
+      - never
+  auth-service:
+    environment:
+      MONGO_URI: ${MONGO_URI_AUTH}
+    depends_on: []
+  meetings-service:
+    environment:
+      MONGO_URI: ${MONGO_URI_MEETINGS}
+    depends_on: []
+  links-service:
+    environment:
+      MONGO_URI: ${MONGO_URI_LINKS}
+    depends_on: []
+  passwords-service:
+    environment:
+      MONGO_URI: ${MONGO_URI_PASSWORDS}
+    depends_on: []
+  notes-service:
+    environment:
+      MONGO_URI: ${MONGO_URI_NOTES}
+    depends_on: []
