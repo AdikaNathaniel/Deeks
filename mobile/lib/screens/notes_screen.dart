@@ -23,7 +23,41 @@ class _NotesScreenState extends State<NotesScreen> {
     _future = _repo.list();
   }
 
-  void _reload() => setState(() => _future = _repo.list());
+  void _reload() => setState(() {
+        _future = _repo.list();
+      });
+
+  Future<void> _confirmAndDelete(Note n) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete note?'),
+        content: Text('"${n.title}" will be permanently removed.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await _repo.delete(n.id);
+      _reload();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Delete failed: $e')),
+        );
+      }
+    }
+  }
 
   Future<void> _openForm({Note? existing, String? prefillBody}) async {
     final saved = await showModalBottomSheet<Note>(
@@ -142,6 +176,11 @@ class _NotesScreenState extends State<NotesScreen> {
                       n.body,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                      tooltip: 'Delete note',
+                      onPressed: () => _confirmAndDelete(n),
                     ),
                     onTap: () => _openForm(existing: n),
                   ),

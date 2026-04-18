@@ -21,7 +21,41 @@ class _LinksScreenState extends State<LinksScreen> {
     _future = _repo.list();
   }
 
-  void _reload() => setState(() => _future = _repo.list());
+  void _reload() => setState(() {
+        _future = _repo.list();
+      });
+
+  Future<void> _confirmAndDelete(LinkEntry l) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete link?'),
+        content: Text('"${l.title}" will be removed.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await _repo.delete(l.id);
+      _reload();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Delete failed: $e')),
+        );
+      }
+    }
+  }
 
   Future<void> _openForm({LinkEntry? existing}) async {
     final saved = await showModalBottomSheet<LinkEntry>(
@@ -79,9 +113,21 @@ class _LinksScreenState extends State<LinksScreen> {
                   child: ListTile(
                     title: Text(l.title),
                     subtitle: Text(l.url),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.open_in_new),
-                      onPressed: () => launchUrl(Uri.parse(l.url)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.open_in_new),
+                          tooltip: 'Open link',
+                          onPressed: () => launchUrl(Uri.parse(l.url)),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline,
+                              color: Colors.red),
+                          tooltip: 'Delete link',
+                          onPressed: () => _confirmAndDelete(l),
+                        ),
+                      ],
                     ),
                     onTap: () => _openForm(existing: l),
                   ),

@@ -23,7 +23,9 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
     _future = _repo.list();
   }
 
-  void _reload() => setState(() => _future = _repo.list());
+  void _reload() => setState(() {
+        _future = _repo.list();
+      });
 
   Future<void> _openForm({Meeting? existing}) async {
     final saved = await showModalBottomSheet<Meeting>(
@@ -56,6 +58,37 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
     await _repo.delete(m.id);
     await NotificationService.instance.cancelForMeeting(m.id);
     _reload();
+  }
+
+  Future<void> _confirmAndDelete(Meeting m) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete meeting?'),
+        content: Text('"${m.title}" will be removed and its reminder cancelled.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await _delete(m);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Delete failed: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -95,9 +128,21 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
                       '${meetingPlatformLabel(m.platform)} · '
                       '${DateFormat('EEE, MMM d · HH:mm').format(m.scheduledAt)}',
                     ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.open_in_new),
-                      onPressed: () => launchUrl(Uri.parse(m.link)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.open_in_new),
+                          tooltip: 'Open meeting link',
+                          onPressed: () => launchUrl(Uri.parse(m.link)),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline,
+                              color: Colors.red),
+                          tooltip: 'Delete meeting',
+                          onPressed: () => _confirmAndDelete(m),
+                        ),
+                      ],
                     ),
                     onTap: () => _openForm(existing: m),
                   ),

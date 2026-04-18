@@ -59,7 +59,41 @@ class _PasswordsScreenState extends State<PasswordsScreen> {
     });
   }
 
-  void _reload() => setState(() => _future = _repo.list());
+  void _reload() => setState(() {
+        _future = _repo.list();
+      });
+
+  Future<void> _confirmAndDelete(PasswordEntry p) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete credential?'),
+        content: Text('"${p.label}" (${p.platform}) will be permanently removed.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await _repo.delete(p.id);
+      _reload();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Delete failed: $e')),
+        );
+      }
+    }
+  }
 
   Future<void> _openForm({PasswordEntry? existing, String? currentPlain}) async {
     final saved = await showModalBottomSheet<_PasswordFormResult>(
@@ -134,19 +168,31 @@ class _PasswordsScreenState extends State<PasswordsScreen> {
                     leading: const Icon(Icons.vpn_key),
                     title: Text(p.label),
                     subtitle: Text(p.platform),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.copy),
-                      tooltip: 'Copy password',
-                      onPressed: () {
-                        final plain =
-                            _vault.decrypt(ciphertext: p.ciphertext, iv: p.iv);
-                        Clipboard.setData(ClipboardData(text: plain));
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Copied to clipboard')),
-                          );
-                        }
-                      },
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.copy),
+                          tooltip: 'Copy password',
+                          onPressed: () {
+                            final plain = _vault.decrypt(
+                                ciphertext: p.ciphertext, iv: p.iv);
+                            Clipboard.setData(ClipboardData(text: plain));
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Copied to clipboard')),
+                              );
+                            }
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline,
+                              color: Colors.red),
+                          tooltip: 'Delete credential',
+                          onPressed: () => _confirmAndDelete(p),
+                        ),
+                      ],
                     ),
                     onTap: () {
                       final plain =

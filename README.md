@@ -11,6 +11,7 @@
   <img alt="MongoDB" src="https://img.shields.io/badge/MongoDB%20Atlas-M0-47A248?logo=mongodb&logoColor=white"/>
   <img alt="Docker" src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white"/>
   <img alt="AWS" src="https://img.shields.io/badge/AWS-EC2%20t2.micro-FF9900?logo=amazonaws&logoColor=white"/>
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-lightgrey"/>
 </p>
 
 ---
@@ -172,6 +173,13 @@ Deeks/
 
 [`deeks.postman_collection.json`](deeks.postman_collection.json) — import into Postman for full CRUD across all five services. JWT is auto-saved to a collection variable after Register/Login and reused on protected requests; created IDs are auto-captured for Get/Update/Delete.
 
+<<<<<<< HEAD
+=======
+## 📝 License
+
+MIT.
+
+>>>>>>> a8ebffb (feat:deletion feature)
 ---
 
 > **Everything you mean to save. Nowhere else to lose it.**
