@@ -16,7 +16,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 # --- captions per output index ---------------------------------------------
 CAPTIONS = {
-    1: "Schedule Meetings",
+    1: "Save Meeting Links",
     2: "Save Links",
     3: "Encrypted Vault",
     4: "Capture Notes",
@@ -131,8 +131,31 @@ def frame_and_caption_raw(src: Path, dest: Path, caption: str) -> None:
 
 
 def recaption_existing(path: Path, caption: str) -> None:
+    """Strip any existing caption band, then apply a fresh caption on top."""
     img = Image.open(path).convert("RGB")
-    captioned = draw_caption(img, caption)
+    w, h = img.size
+    # Find the phone bezel: the first row where a pixel in the central band
+    # is very dark (sum(RGB) < 60 — bezel is ~(12,12,14); navy BG is (11,30,63)
+    # which sums to 104 so we won't false-match the background).
+    phone_top = None
+    x_start = w // 4
+    x_end = 3 * w // 4
+    step = max(1, (x_end - x_start) // 40)
+    for y in range(h):
+        for x in range(x_start, x_end, step):
+            r, g, b = img.getpixel((x, y))
+            if r + g + b < 60:
+                phone_top = y
+                break
+        if phone_top is not None:
+            break
+    if phone_top is None or phone_top < 50:
+        phone_top = 260  # fallback
+
+    # Also strip the small padding gap above the phone so draw_caption can
+    # re-introduce its own uniform top padding.
+    cropped = img.crop((0, phone_top, w, h))
+    captioned = draw_caption(cropped, caption)
     captioned.convert("RGB").save(path, "PNG", optimize=True)
 
 
