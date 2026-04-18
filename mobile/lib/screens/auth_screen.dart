@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../auth/auth_service.dart';
@@ -14,7 +15,26 @@ class _AuthScreenState extends State<AuthScreen> {
   final _password = TextEditingController();
   bool _isRegister = false;
   bool _loading = false;
+  bool _passwordVisible = false;
   String? _error;
+
+  String _humanize(Object error) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map) {
+        final msg = data['message'];
+        if (msg is List && msg.isNotEmpty) return msg.join('\n');
+        if (msg is String && msg.isNotEmpty) return msg;
+      }
+      if (error.response?.statusCode == 401) return 'Invalid email or password.';
+      if (error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.receiveTimeout ||
+          error.type == DioExceptionType.connectionError) {
+        return 'Cannot reach the server. Check your connection.';
+      }
+    }
+    return 'Authentication failed. Please try again.';
+  }
 
   Future<void> _submit() async {
     setState(() {
@@ -29,7 +49,7 @@ class _AuthScreenState extends State<AuthScreen> {
         await auth.login(_email.text.trim(), _password.text);
       }
     } catch (e) {
-      setState(() => _error = 'Authentication failed');
+      setState(() => _error = _humanize(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -46,12 +66,11 @@ class _AuthScreenState extends State<AuthScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(Icons.lock_outline, size: 72, color: Color(0xFF00BCD4)),
-                  const SizedBox(height: 16),
-                  Text(
-                    _isRegister ? 'Create account' : 'Welcome back',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineSmall,
+                  const Center(
+                    child: CircleAvatar(
+                      radius: 70,
+                      backgroundImage: AssetImage('assets/deeks.jpg'),
+                    ),
                   ),
                   const SizedBox(height: 32),
                   TextField(
@@ -62,8 +81,20 @@ class _AuthScreenState extends State<AuthScreen> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: _password,
-                    obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Password'),
+                    obscureText: !_passwordVisible,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _passwordVisible
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                        ),
+                        tooltip: _passwordVisible ? 'Hide password' : 'Show password',
+                        onPressed: () =>
+                            setState(() => _passwordVisible = !_passwordVisible),
+                      ),
+                    ),
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 12),

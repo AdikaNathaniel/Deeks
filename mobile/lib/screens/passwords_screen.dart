@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:pinput/pinput.dart';
 
 import '../api/models/password_entry.dart';
 import '../api/repositories/passwords_repository.dart';
@@ -175,57 +176,109 @@ class _PinSetupDialog extends StatefulWidget {
 }
 
 class _PinSetupDialogState extends State<_PinSetupDialog> {
-  final _pin1 = TextEditingController();
-  final _pin2 = TextEditingController();
+  static const _pinLength = 4;
+  String? _firstPin;
   String? _error;
+  final _controller = TextEditingController();
 
-  void _submit() {
-    final a = _pin1.text;
-    final b = _pin2.text;
-    if (a.length < 6) {
-      setState(() => _error = 'PIN must be at least 6 characters');
-      return;
+  void _onCompleted(String value) {
+    if (_firstPin == null) {
+      setState(() {
+        _firstPin = value;
+        _error = null;
+        _controller.clear();
+      });
+    } else {
+      if (value == _firstPin) {
+        Navigator.pop(context, value);
+      } else {
+        setState(() {
+          _error = 'PINs do not match. Start again.';
+          _firstPin = null;
+          _controller.clear();
+        });
+      }
     }
-    if (a != b) {
-      setState(() => _error = 'PINs do not match');
-      return;
-    }
-    Navigator.pop(context, a);
   }
 
   @override
   Widget build(BuildContext context) {
+    final defaultTheme = PinTheme(
+      width: 56,
+      height: 64,
+      textStyle: const TextStyle(
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
+        color: Colors.black87,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF00BCD4), width: 1.5),
+      ),
+    );
+    final focusedTheme = defaultTheme.copyWith(
+      decoration: defaultTheme.decoration!.copyWith(
+        border: Border.all(color: const Color(0xFF00BCD4), width: 2.5),
+        color: const Color(0xFFE0F7FA),
+      ),
+    );
+    final submittedTheme = defaultTheme.copyWith(
+      decoration: defaultTheme.decoration!.copyWith(
+        color: const Color(0xFFE0F7FA),
+      ),
+    );
+
+    final prompt = _firstPin == null
+        ? 'Choose a 4-digit master PIN'
+        : 'Re-enter your PIN to confirm';
+
     return AlertDialog(
-      title: const Text('Set master PIN'),
+      title: const Text('Set master PIN', textAlign: TextAlign.center),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Used to encrypt your vault. Cannot be recovered if forgotten.',
-            style: TextStyle(fontSize: 12),
+          Text(
+            prompt,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _pin1,
+          const SizedBox(height: 16),
+          Pinput(
+            controller: _controller,
+            length: _pinLength,
             obscureText: true,
-            decoration: const InputDecoration(labelText: 'PIN'),
+            obscuringCharacter: '•',
+            defaultPinTheme: defaultTheme,
+            focusedPinTheme: focusedTheme,
+            submittedPinTheme: submittedTheme,
+            keyboardType: TextInputType.number,
+            autofocus: true,
+            onCompleted: _onCompleted,
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _pin2,
-            obscureText: true,
-            decoration: const InputDecoration(labelText: 'Confirm PIN'),
+          const SizedBox(height: 14),
+          Text(
+            'Encrypts your vault on this device.\nCannot be recovered if forgotten.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.black54,
+                ),
           ),
           if (_error != null) ...[
-            const SizedBox(height: 8),
-            Text(_error!, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 10),
+            Text(
+              _error!,
+              style: const TextStyle(color: Colors.red, fontSize: 13),
+            ),
           ],
         ],
       ),
-      actions: [
-        ElevatedButton(onPressed: _submit, child: const Text('Save')),
-      ],
     );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }
 

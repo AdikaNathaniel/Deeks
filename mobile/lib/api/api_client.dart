@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-// Replace with your gateway URL. For Android emulator use 10.0.2.2 to reach host.
-// For a deployed EC2 it'd be http://<ec2-public-ip> or https://<domain>.
-const String kApiBaseUrl = 'http://10.0.2.2/api';
+// Replace with your gateway URL. For local dev via Android emulator use http://10.0.2.2/api.
+// Currently pointing at the live AWS EC2 deployment.
+const String kApiBaseUrl = 'http://51.20.183.217/api';
 
 const _tokenKey = 'auth_token';
 
